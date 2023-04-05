@@ -1,0 +1,58 @@
+{
+  "id": "3926459",
+  "name": "fim",
+  "font_family": "iconfont",
+  "css_prefix_text": "iconfont-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "5013",
+      "name": "列表",
+      "font_class": "liebiao",
+      "unicode": "e600",
+      "unicode_decimal": 58880
+    },
+    {
+      "icon_id": "568990",
+      "name": "通讯录",
+      "font_class": "tongxunlu",
+      "unicode": "e655",
+      "unicode_decimal": 58965
+    },
+    {
+      "icon_id": "11372682",
+      "name": "朋友圈",
+      "font_class": "pengyouquan",
+      "unicode": "e8b4",
+      "unicode_decimal": 59572
+    },
+    {
+      "icon_id": "19877101",
+      "name": "气泡",
+      "font_class": "qipao",
+      "unicode": "e622",
+      "unicode_decimal": 58914
+    },
+    {
+      "icon_id": "109772",
+      "name": "phone",
+      "font_class": "phone",
+      "unicode": "e63b",
+      "unicode_decimal": 58939
+    },
+    {
+      "icon_id": "1433721",
+      "name": "email",
+      "font_class": "email",
+      "unicode": "e633",
+      "unicode_decimal": 58931
+    },
+    {
+      "icon_id": "1727462",
+      "name": "227注册、添加好友",
+      "font_class": "zhucetianjiahaoyou",
+      "unicode": "e8ca",
+      "unicode_decimal": 59594
+    }
+  ]
+}
