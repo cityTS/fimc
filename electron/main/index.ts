@@ -137,7 +137,10 @@ const sqlite3 = sq3.verbose();
 
 let db;
 
-ipcMain.on('load-sqlite3', (event, userAccount) => {
+ipcMain.handle('load-sqlite3', (event, userAccount) => {
+    if(userAccount === "") {
+        console.error('无效的用户账号')
+    }
     db = new sqlite3.Database(userAccount + '.db', err => {
         if (err != null) {
             console.log(err)
@@ -146,22 +149,41 @@ ipcMain.on('load-sqlite3', (event, userAccount) => {
         db.run("create table if not exists chatList(" +
             "id integer primary key autoincrement, " + // 列表ID
             "userAccount integer, " + // 好友账号
-            "avatarUrl varchar(255), " +
-            "friendNickname varchar(255), " +
-            "recentNews varchar(255), " +
-            "unreadNumber integer, " +
-            "createTime integer)",
+            // "avatarUrl varchar(255), " + // 头像  去好友列表查
+            // "friendNickname varchar(255), " + // 备注 去好友列表查
+            "recentNews varchar(255), " + // 最新消息
+            "unreadNumber integer, " + // 未读消息数
+            "createTime integer)", // 最新的操作时间（排序规则）
                 err => {
             if(err != null) {
                 console.log(err);
             }
             // 本地缓存的消息记录
-            db.run("create table if not exists messageList(messageId integer, type varchar(5), content varchar(255), imgUrl varchar(255), fileName varchar(255), fileUrl varchar(255), fromUser integer, toUser integer, toUserType varchar(1), isGroupMessage integer, fromGroup integer, ip varchar(15), readed integer, createTime integer)", err => {
+            db.run("create table if not exists messageList(" +
+                "messageId integer, " + // 消息ID
+                "type varchar(5), " + // 消息类型
+                "content varchar(255), " + // 文本内容
+                "imgUrl varchar(255), " + // 图片链接
+                "fileName varchar(255), " + // 文件名
+                "fileUrl varchar(255), " + // 文件链接
+                "fromUser integer, " + // 谁发的
+                "toUser integer, " + // 给谁的
+                "toUserType varchar(2), " + // 用户/群
+                "isGroupMessage integer, " + // 是否是群消息
+                "fromGroup integer, " + // 来自哪个群
+                "ip varchar(15), " + // 发送者IP
+                "readed integer, " + // 是否已读
+                "createTime integer)", // 发送时间
+                    err => {
                 if(err != null) {
                     console.log(err)
                 }
                 // 本地缓存的好友列表
-                db.run("create table if not exists friend(friendId integer, avatarUrl varchar(255), friendNickname varchar(255), userAccount integer)", err => {
+                db.run("create table if not exists friend(" +
+                    "avatarUrl varchar(255), " + // 好友头像
+                    "friendNickname varchar(255), " + // 备注
+                    "userAccount integer)", // 账号
+                        err => {
                     if(err != null) {
                         console.log(err)
                     }
@@ -169,6 +191,7 @@ ipcMain.on('load-sqlite3', (event, userAccount) => {
             })
         })
     });
+    return 1
 });
 
 const getChatList = async () => {

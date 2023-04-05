@@ -6,8 +6,10 @@
         ref="upload"
         class="chat-page-dialog-editor-text-button-upload"
         action="http://175.178.114.64:12121"
+        :headers="fileHeader"
         :limit="1"
         :on-error="onError"
+        :before-upload="beforeUpload"
         :auto-upload="true"
         :show-file-list="false"
     >
@@ -32,9 +34,8 @@
 </template>
 <script lang="ts" setup>
 import V3Emoji from 'vue3-emoji'
-import {nextTick, ref} from "vue";
+import {nextTick, reactive, ref} from "vue";
 import {Upload} from "@element-plus/icons";
-import type {genFileId, UploadInstance, UploadProps, UploadRawFile} from "element-plus";
 const textarea = ref('');
 // 根据光标插入emoji表情
 const addEmoji = async (emoji: any) => {
@@ -53,8 +54,12 @@ const addEmoji = async (emoji: any) => {
 }
 const onError = (e, u1, u2) => {
   console.log(e)
-  console.log(u1)
-  console.log(u2)
+}
+const fileHeader = reactive({t: ""})
+const beforeUpload = (file) => {
+  let str = '$' + file.name + '$' + file.size + '$';
+  fileHeader.t = str
+  return true
 }
 // TODO 发送请求的接口
 const submitMessage = () => {

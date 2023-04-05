@@ -21,19 +21,15 @@ const store = useStore();
 /**
  * 加载SQLite3
  */
-const loadSQLite3 = () => {
-  ipcRenderer.send("load-sqlite3", "100000");
+const loadSQLite3 = async () => {
+  return await ipcRenderer.invoke("load-sqlite3", sessionStorage.getItem('userAccount'));
 };
-loadSQLite3();
-
 /**
  * 查询聊天记录列表
  */
 const queryChatList = async () => {
   store.state.chatList = await ipcRenderer.invoke('query-chat-list');
 };
-queryChatList();
-
 
 /**
  * 查找好友列表
@@ -41,8 +37,30 @@ queryChatList();
 const queryFriendList = async () => {
   store.state.friendList = await ipcRenderer.invoke('query-friend-list');
 }
-queryFriendList();
 
+const Sleep = (ms: number) => {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * 加载本地缓存的数据
+ */
+const init = () => {
+  loadSQLite3().then(async status => {
+    if (status === 1) {
+      // 给数据库加载一定的时间
+      await Sleep(1000)
+      queryChatList()
+      queryFriendList()
+    }
+  })
+
+}
+init();
+
+/**
+ * 建立ws通话连接
+ */
 const createWSCon = () => {
   let userId = sessionStorage.getItem('userAccount')
   ipcRenderer.send('create-ws-con', userId)
