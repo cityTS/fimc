@@ -27,24 +27,24 @@
   </div>
   <div class="dialog-add-user">
     <el-dialog v-model="addUserDialogTableVisible" title="添加好友">
-      <el-input placeholder="请输入好友的账号、手机号、邮箱等信息搜索">
+      <el-input placeholder="请输入好友的账号、手机号、邮箱等信息搜索" v-model="userBasicInfo">
         <template #append>
-          <el-button :icon="Search"/>
+          <el-button :icon="Search" @click="searchUserInfo"/>
         </template>
       </el-input>
-      <el-table :data="seekUserInfo">
-        <el-table-column property="avatarUrl" width="50">
+      <el-table :data="seekUserInfo" :key="certinfoKey">
+        <el-table-column property="user.avatarUrl" width="50">
           <template #default="scope">
-            <el-image :src="scope.row.avatarUrl" style="width: 40px" :fit="'fill'"></el-image>
+            <el-image :src="scope.row.user.avatarUrl" style="width: 40px" :fit="'fill'"></el-image>
           </template>
         </el-table-column>
-        <el-table-column property="username" label="用户名"/>
-        <el-table-column property="userAccount" label="FIM号" width="100"/>
+        <el-table-column property="user.username" label="用户名"/>
+        <el-table-column property="user.userAccount" label="FIM号" width="100"/>
         <el-table-column property="status" width="100">
           <template #default="scope">
-            <el-button type="primary" v-if="scope.row.status === 0">加为好友</el-button>
-            <el-button type="warning" v-if="scope.row.status === 1">申请中</el-button>
-            <el-button type="success" v-if="scope.row.status === 2">已是好友</el-button>
+            <el-button type="primary" v-if="scope.row.status === 0" @click="addUser">加为好友</el-button>
+            <el-button type="warning" v-if="scope.row.status === 1" disabled>申请中</el-button>
+            <el-button type="success" v-if="scope.row.status === 2" disabled>已是好友</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -55,11 +55,12 @@
 
 <script lang="ts" setup>
 
-import {reactive, ref} from "vue";
+import {reactive, ref, watch} from "vue";
 import {useRouter} from "vue-router";
 import {shell} from "electron";
 import {Search} from "@element-plus/icons";
-
+import {addFriend, queryUserBasicInfo} from "../api/apis.js";
+const certinfoKey = ref(false)
 const router = useRouter();
 const user = reactive({
   avatarUrl: sessionStorage.getItem('avatarUrl')
@@ -67,17 +68,50 @@ const user = reactive({
 // 选项内容可视
 const footerItemsShow = ref(false)
 const addUserDialogTableVisible = ref(false)
-const seekUserInfo = [{
-  avatarUrl: 'https://picx.zhimg.com/80/v2-2e1641a8fb38884c8b185ee293d5ae12_720w.webp?source=1940ef5c',
-  username: '快乐大男孩',
-  userAccount: 10053,
-  status: 0 // 0 未申请 1 申请中 2 好友
-}]
-
+let seekUserInfo: any[] = []
+const userBasicInfo = ref('')
 const changeRouter = (path: string) => {
 
   router.push({path: path})
 }
+
+const searchUserInfo = async () => {
+  let query = {
+    str: userBasicInfo.value,
+    userId: sessionStorage.getItem('userAccount')
+  }
+  let data = await queryUserBasicInfo(query)
+  if(seekUserInfo.length !== 0) {
+    seekUserInfo = []
+  }
+  if(data.code === 0) seekUserInfo.push(data.data);
+  else alert(data.msg)
+  console.log(seekUserInfo)
+  certinfoKey.value = !certinfoKey.value
+}
+
+const addUser = async () => {
+  let data = await addFriend({
+    friendId: seekUserInfo[0].user.userAccount,
+    userId: sessionStorage.getItem('userAccount')
+  })
+  if (data.code === 0) {
+    seekUserInfo[0].status = 1;
+    certinfoKey.value = ! certinfoKey.value
+  } else {
+    alert(data.msg)
+  }
+}
+
+watch(
+    () => addUserDialogTableVisible.value,
+    (val, preVal) => {
+      if(!val) {
+        userBasicInfo.value = ''
+        seekUserInfo = []
+      }
+    }
+)
 
 const openPYQ = () => {
   const url = "http://qq.com"
