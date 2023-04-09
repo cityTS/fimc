@@ -35,7 +35,7 @@
       <el-form-item label="密码" type="password" prop="password">
         <el-input v-model="loginEmailTable.password" show-password></el-input>
       </el-form-item>
-      <el-button type="success">登录</el-button>
+      <el-button type="success" @click="loginEmail">登录</el-button>
     </el-form>
   </div>
 
@@ -75,7 +75,7 @@
 <script lang="ts" setup>
 import {reactive, ref} from "vue";
 import {shell} from "electron";
-import {ackPhone, signInPhone} from '../api/apis.js';
+import {ackPhone, signInEmail, signInPhone} from '../api/apis.js';
 import {useRouter} from "vue-router";
 const router = useRouter()
 
@@ -122,7 +122,6 @@ const getVerificationCode = async () => {
   if (!phone.test(loginPhoneTable.phone)) {
     return
   }
-  //TODO 发送验证码请求，如果服务器正常响应，跳转到验证码界面
   const data = await ackPhone({phone: loginPhoneTable.phone})
   if(data.code === 0)  loginPhoneStep.value = 1
   else alert(data.msg)
@@ -162,6 +161,19 @@ const {ipcRenderer} = require('electron')
 const loginPhone = async () => {
   if (loginPhoneTable.verificationCode === '') return;
   const data = await signInPhone({phone: loginPhoneTable.phone, code: loginPhoneTable.verificationCode})
+  if(data.code === 0) {
+    sessionStorage.setItem('userAccount', data.data.userAccount)
+    sessionStorage.setItem('username', data.data.username)
+    sessionStorage.setItem('avatarUrl', data.data.avatarUrl)
+    ipcRenderer.send('change-window-size', 900, 650)
+    router.replace('/chat')
+  } else {
+    alert(data.msg)
+  }
+}
+
+const loginEmail = async () => {
+  let data = await signInEmail({email: loginEmailTable.email, password: loginEmailTable.password})
   if(data.code === 0) {
     sessionStorage.setItem('userAccount', data.data.userAccount)
     sessionStorage.setItem('username', data.data.username)

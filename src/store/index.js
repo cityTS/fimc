@@ -23,8 +23,8 @@ export default createStore({
             messageList: [],
             chatList: [],
             friendList: [],
-            backUrl: "http://localhost:4444/api",
-            wsUrl: "ws://localhost:4399/api/addWSConn"
+            backUrl: "http://43.139.136.169:10027/api",
+            wsUrl: "ws://43.139.136.169:10026/api/addWSConn"
         }
     },
     getters: {},

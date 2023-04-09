@@ -13,24 +13,55 @@
     </div>
     <div class="friend-page-info-body-second">
       <el-button type="success" @click="sendMessage">发消息</el-button>
+      <el-button type="danger" @click="removeFriend">删除好友</el-button>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import {reactive} from "vue";
+import {reactive, watch} from "vue";
 import {useRouter} from "vue-router";
+import {ipcRenderer} from "electron";
+import {deleteFriend} from "../api/apis";
+
 const router = useRouter();
-// TODO 服务器请求，不通过本地缓存
 const info = reactive({
-  avatarUrl: "https://picx.zhimg.com/80/v2-2e1641a8fb38884c8b185ee293d5ae12_720w.webp?source=1940ef5c",
-  friendNickname: "金珉瑞",
-  userAccount: 100001,
-  username: "我是胡桃的狗"
+  avatarUrl: '',
+  friendNickname: '',
+  username: '',
+  userAccount: 0
 })
 const sendMessage = () => {
   router.push({path: "/chat/" + info.userAccount})
 }
+
+const removeFriend = () => {
+  ipcRenderer.send('remove-friend', info.userAccount)
+  deleteFriend({friendId: info.userAccount, userId: sessionStorage.getItem('userAccount')})
+}
+
+const getUserInfo = async () => {
+
+  let userInfo = await ipcRenderer.invoke('query-user', router.currentRoute.value.params.userAccount)
+  info.avatarUrl = userInfo.avatarUrl
+  info.friendNickname = userInfo.friendNickname
+  info.username = userInfo.username
+  info.userAccount = userInfo.userAccount
+  console.log('----info------')
+  console.log(info)
+}
+
+watch(() => router.currentRoute.value.params.userAccount, (val, old) => {
+  console.log("------watch.Friend.userAccount------")
+  console.log(val)
+  console.log(old)
+  console.log(router.currentRoute.value.fullPath)
+  console.log(val !== 'undefined' && router.currentRoute.value.fullPath.includes('friend'))
+  if(val !== 'undefined' && val !== undefined && router.currentRoute.value.fullPath.includes('friend')) {
+    getUserInfo()
+  }
+}, {immediate: true})
+
 </script>
 
 <style>

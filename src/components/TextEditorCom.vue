@@ -2,21 +2,20 @@
   <div class="chat-page-dialog-editor-text-button">
     <hr class="hr"/>
     <v3-emoji style="width: 40px;font-size: 26px;" class="chat-page-dialog-editor-text-button-emoji" :recent="true" @click-emoji="addEmoji"/>
-    <el-upload
-        ref="upload"
-        class="chat-page-dialog-editor-text-button-upload"
-        action="http://175.178.114.64:12121"
-        :headers="fileHeader"
-        :limit="1"
-        :on-error="onError"
-        :before-upload="beforeUpload"
-        :auto-upload="true"
-        :show-file-list="false"
-    >
-      <template #trigger>
-        <el-button :icon="Upload" circle/>
-      </template>
-    </el-upload>
+<!--    <el-upload-->
+<!--        ref="upload"-->
+<!--        class="chat-page-dialog-editor-text-button-upload"-->
+<!--        action="http://43.139.136.169:10025/api/post_file/"-->
+<!--        :limit="1"-->
+<!--        :on-error="onError"-->
+<!--        :on-success="handleSuccess"-->
+<!--        :auto-upload="true"-->
+<!--        :show-file-list="false"-->
+<!--    >-->
+<!--      <template #trigger>-->
+<!--        <el-button :icon="Upload" circle/>-->
+<!--      </template>-->
+<!--    </el-upload>-->
   </div>
   <div class="chat-page-dialog-editor-text-input">
     <el-input
@@ -36,6 +35,8 @@
 import V3Emoji from 'vue3-emoji'
 import {nextTick, reactive, ref} from "vue";
 import {Upload} from "@element-plus/icons";
+import {ipcRenderer} from "electron";
+import {useRouter} from "vue-router";
 const textarea = ref('');
 // 根据光标插入emoji表情
 const addEmoji = async (emoji: any) => {
@@ -55,15 +56,25 @@ const addEmoji = async (emoji: any) => {
 const onError = (e, u1, u2) => {
   console.log(e)
 }
-const fileHeader = reactive({t: ""})
-const beforeUpload = (file) => {
-  let str = '$' + file.name + '$' + file.size + '$';
-  fileHeader.t = str
-  return true
+const handleSuccess = (response: any, uploadFile: { raw: Blob | MediaSource; }) => {
+  let message = {
+    type: 2,
+    imgUrl: "http://43.139.136.169:10025/api/get_file/?path=" + response,
+    isGroupMessage: 0
+  }
+  ipcRenderer.send('send-message', JSON.stringify(message))
 }
-// TODO 发送请求的接口
+const router = useRouter()
 const submitMessage = () => {
-  console.log(textarea);
+  // TODO 群消息处理
+  let message = {
+    type: 1,
+    content: textarea.value,
+    fromUser: parseInt(sessionStorage.getItem('userAccount')),
+    toUser: parseInt(router.currentRoute.value.params.userAccount),
+    isGroupMessage: 0
+  }
+  ipcRenderer.send('send-message', JSON.stringify(message))
   textarea.value = '';
 }
 </script>

@@ -21,17 +21,6 @@ const store = useStore();
 const shudder = ref(true);
 let allChatList: any[];
 let showChatList: any[];
-watch(() => store.state.chatList, (val, old) => {
-  allChatList = val;
-  showChatList = allChatList.filter((item: { friendNickname: string; }) => (searchInfo.value === '' || item.friendNickname.includes(searchInfo.value)))
-  showChatList.sort((a, b) => {
-    return a.createTime - b.createTime;
-  })
-},{deep: true, immediate: true})
-watch(() => searchInfo.value, (val, old) => {
-  showChatList = allChatList.filter((item: {friendNickname: string;}) => (val === '' || item.friendNickname.includes(val)))
-  shudderDom();
-})
 const shudderDom = async () => {
   shudder.value = false;
   await nextTick();
@@ -40,6 +29,19 @@ const shudderDom = async () => {
   })
   shudder.value = true;
 }
+watch(() => store.state.chatList, (val, old) => {
+  allChatList = val;
+  showChatList = allChatList.filter((item: { friendNickname: string; }) => (searchInfo.value === '' || item.friendNickname.includes(searchInfo.value)))
+  showChatList.sort((a, b) => {
+    return a.createTime - b.createTime;
+  })
+  shudderDom()
+  console.log(showChatList)
+},{deep: true, immediate: true})
+watch(() => searchInfo.value, (val, old) => {
+  showChatList = allChatList.filter((item: {friendNickname: string;}) => (val === '' || item.friendNickname.includes(val)))
+  shudderDom();
+})
 
 </script>
 

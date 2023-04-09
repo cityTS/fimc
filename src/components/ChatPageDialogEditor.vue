@@ -30,7 +30,7 @@ const getUserInfo = async (userAccount: String) => {
   account.value = user.userAccount;
 }
 watch(() => router.currentRoute.value.params.userAccount, (val, old) => {
-  if (typeof val === "string") {
+  if (val !== "undefined" && val !== undefined) {
     getUserInfo(val);
   }
 }, {immediate: true})

@@ -1,7 +1,7 @@
 <template>
   <div class="button-page-body">
     <div class="button-page-item">
-      <el-avatar shape="square" :size="40" :src="user.avatarUrl"></el-avatar>
+      <el-avatar shape="square" :size="40" :src="user.avatarUrl" @click="openUserInfo"></el-avatar>
     </div>
     <div class="button-page-item">
       <el-badge class="button-page-item-badge" :is-dot="true">
@@ -23,6 +23,7 @@
     </div>
     <div class="button-page-footer-items" v-if="footerItemsShow">
       <div class="foot-item" @click="addUserDialogTableVisible = !addUserDialogTableVisible">添加好友</div>
+      <div class="foot-item" @click="showApplyDialog">申请列表</div>
     </div>
   </div>
   <div class="dialog-add-user">
@@ -50,6 +51,55 @@
       </el-table>
     </el-dialog>
   </div>
+  <div class="dialog-apply-user">
+    <el-dialog v-model="applyDialogTableVisible" title="申请列表">
+      <el-table :data="applyUserList" :key="applyKey">
+          <el-table-column property="avatarUrl" width="50">
+            <template #default="scope">
+              <el-image :src="scope.row.avatarUrl" style="width: 40px" :fit="'fill'"></el-image>
+            </template>
+          </el-table-column>
+        <el-table-column property="username" label="用户名"/>
+        <el-table-column property="userAccount" label="FIM号" width="100"/>
+        <el-table-column width="120">
+          <template #default="scope">
+            <el-button type="danger" @click="refuse(scope.row.userAccount)">拒绝</el-button>
+            <el-button type="success" @click="agree(scope.row.userAccount)">同意</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+  </div>
+  <div class="dialog-user-info">
+    <el-dialog v-model="userInfoDialogTableVisible" title="修改个人信息">
+      <div class="user-info-avatar">
+        <el-avatar shape="square" :size="80" :src="user.avatarUrl"></el-avatar>
+        <el-upload
+            class="avatar-uoloader"
+            action="http://43.139.136.169:10025/api/post_file/"
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload">
+          <el-button type="primary">更新头像</el-button>
+        </el-upload>
+      </div>
+      <div class="user-info-information">
+        <el-input v-model="user.username">
+          <template #prepend>
+            昵&emsp;称:
+          </template>
+        </el-input>
+        <el-input v-model="user.password">
+          <template #prepend>
+            新密码:
+          </template>
+        </el-input>
+      </div>
+      <div class="save-info">
+        <el-button type="success" @click="saveUserInfo">保存</el-button>
+      </div>
+    </el-dialog>
+  </div>
 </template>
 
 
@@ -58,21 +108,78 @@
 import {reactive, ref, watch} from "vue";
 import {useRouter} from "vue-router";
 import {shell} from "electron";
-import {Search} from "@element-plus/icons";
-import {addFriend, queryUserBasicInfo} from "../api/apis.js";
+import {ElMessage} from "element-plus";
+import {Check, Delete, Search} from "@element-plus/icons";
+import {addFriend, agreeApply, queryApplyList, queryUserBasicInfo, saveUser} from "../api/apis.js";
 const certinfoKey = ref(false)
+const applyKey = ref(false)
 const router = useRouter();
 const user = reactive({
-  avatarUrl: sessionStorage.getItem('avatarUrl')
+  avatarUrl: sessionStorage.getItem('avatarUrl'),
+  username: sessionStorage.getItem('username'),
+  password: '',
+  userAccount: sessionStorage.getItem('userAccount')
 });
+const applyDialogTableVisible = ref(false)
 // 选项内容可视
 const footerItemsShow = ref(false)
 const addUserDialogTableVisible = ref(false)
 let seekUserInfo: any[] = []
+let applyUserList: any[] = []
 const userBasicInfo = ref('')
+const userInfoDialogTableVisible = ref(false)
 const changeRouter = (path: string) => {
 
   router.push({path: path})
+}
+
+const saveUserInfo = async () => {
+  let data = await saveUser(user)
+  if(data.code === 0) {
+    sessionStorage.setItem('avatarUrl', user.avatarUrl)
+    sessionStorage.setItem('username', user.username)
+    userInfoDialogTableVisible.value = false
+  } else {
+    ElMessage.warn(data.msg)
+  }
+}
+
+watch(() => userInfoDialogTableVisible.value, (val, old) => {
+  if(val === false) {
+    user.username = sessionStorage.getItem('username')
+    user.avatarUrl = sessionStorage.getItem('avatarUrl')
+    user.password = ''
+  }
+})
+
+const handleAvatarSuccess = (response: any, uploadFile: { raw: Blob | MediaSource; }) => {
+  console.log('----response-----')
+  console.log(response)
+  user.avatarUrl = "http://43.139.136.169:10025/api/get_file/?path=" + response
+}
+
+const beforeAvatarUpload = (rawFile: { type: string; size: number; }) => {
+  if (rawFile.type !== 'image/jpeg' && rawFile.type !== 'image/png') {
+    ElMessage.error('Avatar picture must be JPG/PNG format!')
+    return false
+  } else if (rawFile.size / 1024 / 1024 > 2) {
+    ElMessage.error('Avatar picture size can not exceed 2MB!')
+    return false
+  }
+  return true
+}
+
+const openUserInfo = () => {
+  userInfoDialogTableVisible.value = !userInfoDialogTableVisible.value
+}
+
+const showApplyDialog = async () => {
+  let data = await queryApplyList({userId: sessionStorage.getItem('userAccount')})
+  if(data.code === 0) {
+    applyUserList = data.data
+    applyKey.value = !applyKey.value
+    applyDialogTableVisible.value = !applyDialogTableVisible.value
+  }
 }
 
 const searchUserInfo = async () => {
@@ -102,7 +209,29 @@ const addUser = async () => {
     alert(data.msg)
   }
 }
+const agree = async (id: any) => {
+  let data = await agreeApply({sponsorId: id, recipientId: sessionStorage.getItem('userAccount')})
+  if(data.code === 0) {
+    alert('成功添加好友')
+  }
+  data = await queryApplyList({userId: sessionStorage.getItem('userAccount')})
+  if(data.code === 0) {
+    applyUserList = data.data
+    applyKey.value = !applyKey.value
+  }
+}
 
+const refuse = async (id: any) => {
+  let data = await agreeApply({sponsorId: id, recipientId: sessionStorage.getItem('userAccount')})
+  if(data.code === 0) {
+    alert('删除好友成功')
+  }
+  data = await queryApplyList({userId: sessionStorage.getItem('userAccount')})
+  if(data.code === 0) {
+    applyUserList = data.data
+    applyKey.value = !applyKey.value
+  }
+}
 watch(
     () => addUserDialogTableVisible.value,
     (val, preVal) => {
@@ -114,13 +243,31 @@ watch(
 )
 
 const openPYQ = () => {
-  const url = "http://qq.com"
+  const url = "http://43.139.136.169:10025"
   shell.openExternal(url)
 }
 
 </script>
 
 <style>
+.avatar-uoloader {
+  display: inline-block;
+}
+.save-info {
+  width: 100%;
+  text-align: right;
+}
+
+.user-info-information {
+  width: 100%;
+}
+.user-info-avatar {
+  width: 100%;
+}
+
+.el-button {
+  padding: 0 5px;
+}
 
 .button-page-body {
   background-color: #2e2e2e;

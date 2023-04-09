@@ -15,6 +15,7 @@
 import ButtonCom from "../components/ButtonCom.vue";
 import {ipcRenderer} from "electron";
 import {useStore} from "vuex";
+import {queryUserFriends} from "../api/apis.js";
 
 const store = useStore();
 
@@ -28,7 +29,10 @@ const loadSQLite3 = async () => {
  * 查询聊天记录列表
  */
 const queryChatList = async () => {
-  store.state.chatList = await ipcRenderer.invoke('query-chat-list');
+  store.state.chatList = await ipcRenderer.invoke('query-chat-list')
+  setInterval(() => {
+    ipcRenderer.send('get-news-message')
+  }, 10000)
 };
 
 /**
@@ -43,9 +47,19 @@ const Sleep = (ms: number) => {
 }
 
 /**
+ * 建立ws通话连接
+ */
+const createWSCon = () => {
+  let userId = sessionStorage.getItem('userAccount')
+  ipcRenderer.send('create-ws-con', userId)
+}
+
+/**
  * 加载本地缓存的数据
  */
 const init = () => {
+  createWSCon()
+  Sleep(1000)
   loadSQLite3().then(async status => {
     if (status === 1) {
       // 给数据库加载一定的时间
@@ -54,18 +68,21 @@ const init = () => {
       queryFriendList()
     }
   })
-
 }
 init();
 
-/**
- * 建立ws通话连接
- */
-const createWSCon = () => {
-  let userId = sessionStorage.getItem('userAccount')
-  ipcRenderer.send('create-ws-con', userId)
-}
-createWSCon()
+let chatListAck = -1;
+
+setInterval(async () => {
+  let d = await ipcRenderer.invoke('get-chat-list-ack')
+  if(d != chatListAck) {
+    chatListAck = d
+    ipcRenderer.send('update-chat-list')
+    await Sleep(1000)
+    queryChatList()
+  }
+}, 500)
+
 </script>
 
 <style>
