@@ -190,6 +190,7 @@ ipcMain.handle('load-sqlite3', (event, userAccount) => {
                                 if (err != null) {
                                     console.log(err)
                                 }
+                                updateChatList()
                             })
                     })
             })
