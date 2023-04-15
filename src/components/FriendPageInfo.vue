@@ -39,6 +39,7 @@ const removeFriend = () => {
   ipcRenderer.send('remove-friend', info.userAccount)
   deleteFriend({friendId: info.userAccount, userId: sessionStorage.getItem('userAccount')})
   router.push({path: "/chat/friend"})
+  ipcRenderer.send('update-chat-list')
 }
 
 const getUserInfo = async () => {
