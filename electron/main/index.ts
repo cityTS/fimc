@@ -265,37 +265,41 @@ const updateChatList = () => {
             else if (res[i].type === 2) map[user].recentNews = "'[图片]'"
             else map[user].recentNews = "'[文件]'"
         }
-        for (const userAccount in map) {
-            db.run("update chatList set " +
-                "recentNews=" + map[userAccount].recentNews + "," +
-                "unreadNumber=" + map[userAccount].unreadNumber + "," +
-                "createTime=" + map[userAccount].createTime + "," +
-                "avatarUrl=" + map[userAccount].avatarUrl + "," +
-                "friendNickname=" + map[userAccount].friendNickname +
-                " where userAccount=" + userAccount, err => {
-                    if (err) throw err;
+        db.run("delete from chatList", err => {
+            if (err) throw err
+            for (const userAccount in map) {
+                db.run("update chatList set " +
+                    "recentNews=" + map[userAccount].recentNews + "," +
+                    "unreadNumber=" + map[userAccount].unreadNumber + "," +
+                    "createTime=" + map[userAccount].createTime + "," +
+                    "avatarUrl=" + map[userAccount].avatarUrl + "," +
+                    "friendNickname=" + map[userAccount].friendNickname +
+                    " where userAccount=" + userAccount, err => {
+                        if (err) throw err;
 
-                    db.get("select count(*) as num from chatList where userAccount=" + userAccount, (err, res) => {
-                        if (err) throw err
-                        // console.log(res.num)
-                        // console.log(typeof res.num)
-                        if (res.num === 0) {
-                            db.run("insert into chatList(userAccount, recentNews, unreadNumber, createTime, avatarUrl, friendNickname)" +
-                                "values(" + userAccount + "," +
-                                map[userAccount].recentNews + "," +
-                                map[userAccount].unreadNumber + "," +
-                                map[userAccount].createTime + "," +
-                                map[userAccount].avatarUrl + "," +
-                                map[userAccount].friendNickname +
-                                ")", err => {
-                                    if (err) throw err
-                                }
-                            )
-                        }
-                    })
-                }
-            )
-        }
+                        db.get("select count(*) as num from chatList where userAccount=" + userAccount, (err, res) => {
+                            if (err) throw err
+                            // console.log(res.num)
+                            // console.log(typeof res.num)
+                            if (res.num === 0) {
+                                db.run("insert into chatList(userAccount, recentNews, unreadNumber, createTime, avatarUrl, friendNickname)" +
+                                    "values(" + userAccount + "," +
+                                    map[userAccount].recentNews + "," +
+                                    map[userAccount].unreadNumber + "," +
+                                    map[userAccount].createTime + "," +
+                                    map[userAccount].avatarUrl + "," +
+                                    map[userAccount].friendNickname +
+                                    ")", err => {
+                                        if (err) throw err
+                                    }
+                                )
+                            }
+                        })
+                    }
+                )
+            }
+        })
+
     })
 
 }
