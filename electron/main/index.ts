@@ -236,6 +236,11 @@ const updateChatList = () => {
             }
             // console.log(typeof res[i].fromUser, typeof res[i].toUser, typeof userId, typeof user)
             if (map[user] === undefined) {
+                let u = await getAvatarAndNickname(user)
+                console.log(u)
+                if (!u) {
+                    continue
+                }
                 map[user] = {
                     createTime: '',
                     type: '',
@@ -244,7 +249,6 @@ const updateChatList = () => {
                     avatarUrl: '',
                     friendNickname: ''
                 }
-                let u = await getAvatarAndNickname(user)
                 // console.log("-----U-------")
                 // console.log(u)
                 // @ts-ignore
@@ -440,7 +444,7 @@ const handleTIFMessage = (c) => {
         }
     }
     db.run("insert into messageList(messageId, type, content, fromUser, toUser, isGroupMessage, readed, createTime)" +
-        "values(" + c.id + "," + c.type + "," + c.content + ","  + c.fromUser + "," + c.toUser + "," + c.isGroupMessage + "," + c.readed + "," + c.createTime + ")", err => {
+        "values(" + c.id + "," + c.type + "," + c.content + "," + c.fromUser + "," + c.toUser + "," + c.isGroupMessage + "," + c.readed + "," + c.createTime + ")", err => {
         // console.log("add a new news:", c.toString(), "err:", err)
         chatListAck++
     })
@@ -551,13 +555,12 @@ const handlePullUnloadMessageNotice = (content) => {
             }
         }
         db.run("insert into messageList(messageId, type, content, fromUser, toUser, isGroupMessage, readed, createTime)" +
-            "values(" + c.id + "," + c.type + "," + c.content + "," +  c.fromUser + "," + c.toUser + "," + c.isGroupMessage + "," +  c.readed + "," + c.createTime + ")", err => {
+            "values(" + c.id + "," + c.type + "," + c.content + "," + c.fromUser + "," + c.toUser + "," + c.isGroupMessage + "," + c.readed + "," + c.createTime + ")", err => {
             console.log("添加了新消息记录:", c.toString(), "err:", err)
             chatListAck++
         })
     }
 }
-
 
 
 const initMessages = (messageId: string) => {
@@ -584,25 +587,26 @@ ipcMain.on('load-friends', (event, data) => {
 
 const getUserFriend = data => {
     if (data.code === 0) {
-        for (const i in data.data) {
-            let friend = data.data[i]
-            if (friend.friendNickname === null) {
-                friend.friendNickname = friend.user.username
-            }
-            db.run("delete from friend", err => {
+        db.run("delete from friend", err => {
                 if (err) throw err
-                db.run("insert into friend(avatarUrl, friendNickname, userAccount, username, sex, birth) values(" +
-                    "'" + friend.user.avatarUrl + "'," +
-                    "'" + friend.friendNickname + "'," +
-                    friend.user.userAccount + "," +
-                    "'" + friend.user.username + "'," +
-                    "'" + friend.user.userSex + "'," +
-                    friend.user.userBirth +
-                    ")", err => {
-                    if (err) throw err
-                })
-            })
-        }
+                for (const i in data.data) {
+                    let friend = data.data[i]
+                    if (friend.friendNickname === null) {
+                        friend.friendNickname = friend.user.username
+                    }
+                    db.run("insert into friend(avatarUrl, friendNickname, userAccount, username, sex, birth) values(" +
+                        "'" + friend.user.avatarUrl + "'," +
+                        "'" + friend.friendNickname + "'," +
+                        friend.user.userAccount + "," +
+                        "'" + friend.user.username + "'," +
+                        "'" + friend.user.userSex + "'," +
+                        friend.user.userBirth +
+                        ")", err => {
+                        if (err) throw err
+                    })
+                }
+            }
+        )
     }
 }
 
@@ -610,11 +614,11 @@ const getUserFriend = data => {
 ipcMain.on('remove-friend', (event, friendId) => {
     sendMessage(JSON.stringify({type: 4, notice: 5, content: friendId.toString(), isGroupMessage: 0}))
     db.run('delete from friend where userAccount=' + friendId, (err) => {
-        if(err) throw err
+        if (err) throw err
         db.run('delete from messageList where fromUser=' + friendId + " or toUser=" + friendId, (err) => {
-            if(err) throw err
+            if (err) throw err
             db.run('delete from chatList where userAccount=' + friendId, (err) => {
-                if(err) throw err
+                if (err) throw err
             })
         })
     })
