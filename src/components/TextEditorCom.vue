@@ -60,7 +60,7 @@ const handleSuccess = (response: any, uploadFile: { raw: Blob | MediaSource; }) 
   let message = {
     type: 2,
     imgUrl: "http://43.139.136.169:10025/api/get_file/?path=" + response,
-    isGroupMessage: 0
+    isGroupMessage: false
   }
   ipcRenderer.send('send-message', JSON.stringify(message))
 }

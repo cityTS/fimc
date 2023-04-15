@@ -439,8 +439,8 @@ const handleTIFMessage = (c) => {
             c[cKey] = "'" + c[cKey] + "'"
         }
     }
-    db.run("insert into messageList(messageId, type, content, imgUrl, fileName, fileUrl, fromUser, toUser, isGroupMessage, fromGroup, readed, createTime)" +
-        "values(" + c.id + "," + c.type + "," + c.content + "," + c.imgUrl + "," + c.fileName + "," + c.fileUrl + "," + c.fromUser + "," + c.toUser + "," + c.isGroupMessage + "," + c.fromGroup + "," + c.readed + "," + c.createTime + ")", err => {
+    db.run("insert into messageList(messageId, type, content, fromUser, toUser, isGroupMessage, readed, createTime)" +
+        "values(" + c.id + "," + c.type + "," + c.content + ","  + c.fromUser + "," + c.toUser + "," + c.isGroupMessage + "," + c.readed + "," + c.createTime + ")", err => {
         // console.log("add a new news:", c.toString(), "err:", err)
         chatListAck++
     })
@@ -550,9 +550,9 @@ const handlePullUnloadMessageNotice = (content) => {
                 c[cKey] = "'" + c[cKey] + "'"
             }
         }
-        db.run("insert into messageList(messageId, type, content, imgUrl, fileName, fileUrl, fromUser, toUser, isGroupMessage, fromGroup, readed, createTime)" +
-            "values(" + c.id + "," + c.type + "," + c.content + "," + c.imgUrl + "," + c.fileName + "," + c.fileUrl + "," + c.fromUser + "," + c.toUser + "," + c.isGroupMessage + "," + c.fromGroup + "," + c.readed + "," + c.createTime + ")", err => {
-            // console.log("添加了新消息记录:", c.toString(), "err:", err)
+        db.run("insert into messageList(messageId, type, content, fromUser, toUser, isGroupMessage, readed, createTime)" +
+            "values(" + c.id + "," + c.type + "," + c.content + "," +  c.fromUser + "," + c.toUser + "," + c.isGroupMessage + "," +  c.readed + "," + c.createTime + ")", err => {
+            console.log("添加了新消息记录:", c.toString(), "err:", err)
             chatListAck++
         })
     }
