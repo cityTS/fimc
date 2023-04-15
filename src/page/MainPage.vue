@@ -39,7 +39,13 @@ const queryChatList = async () => {
  * 查找好友列表
  */
 const queryFriendList = async () => {
-  store.state.friendList = await ipcRenderer.invoke('query-friend-list');
+  // store.state.friendList = await ipcRenderer.invoke('query-friend-list');
+  let data = await queryUserFriends({userId: sessionStorage.getItem('userAccount')});
+  if(data.code === 0) {
+    ipcRenderer.send('load-friends', data)
+    await Sleep(300)
+    store.state.friendList = await ipcRenderer.invoke('query-friend-list');
+  }
 }
 
 const Sleep = (ms: number) => {
@@ -65,7 +71,8 @@ const init = () => {
       // 给数据库加载一定的时间
       await Sleep(1000)
       queryChatList()
-      queryFriendList()
+      setInterval(queryFriendList, 3000)
+
     }
   })
 }
